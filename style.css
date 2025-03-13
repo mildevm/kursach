@@ -1,10 +1,41 @@
-* {
+/* центрирование тела страницы */
+
+body {
     margin: 0;
-    padding: 0
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    /* высота экрана */
+    background-color: #ffe4e1;
+    /* роз фон страницы */
 }
 
-#arkanoid {
-    background-color: lightpink;
+
+/* обертка вокруг игры */
+
+.game-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 820px;
+    /* ширина контейнера чуть больше Canvas */
+    height: 620px;
+    /* высота контейнера чуть больше Canvas */
+    background-color: #ffcccc;
+    /* светло-роз фон внутри рамки */
+    border: 10px solid #ff69b4;
+    /* роз рамка */
+    box-shadow: 0 0 20px #ff69b4;
+    /* свечение рамки */
+}
+
+
+/* настройка Canvas */
+
+canvas {
     display: block;
-    margin: 0 auto;
+    background-color: #222;
+    /* темный фон игрового поля */
 }

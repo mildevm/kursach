@@ -1,166 +1,162 @@
-const CANVAS_NODE = document.getElementById("arkanoid");
-const CTX = CANVAS_NODE.getContext("2d");
-const BALL_RADIUS = 10;
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-CTX.fillStyle = "pink"
-CTX.font = "16px Arial";
+// Параметры мяча
+let ballRadius = 10;
+let x = canvas.width / 2;
+let y = canvas.height - 30;
+let dx = 3;
+let dy = -3;
 
-const PADDLE_HEIGHT = 10;
-const PADDLE_WIDTH = 75;
+// Параметры платформы
+const paddleHeight = 10;
+const paddleWidth = 100;
+let paddleX = (canvas.width - paddleWidth) / 2;
 
-const BRICK_ROW_COUNT = 5;
-const BRICK_COLUMN_COUNT = 3;
-const BRICK_WIDTH = 75;
-const BRICK_HEIGHT = 20;
-const BRICK_PADDING = 10;
-const BRICK_OFFSET = 30;
+// Управление платформой
+let rightPressed = false;
+let leftPressed = false;
 
-let ballX = CANVAS_NODE.width / 2;
-let ballY = CANVAS_NODE.height - 30;
-let dx = 2;
-let dy = -2;
+// Параметры кирпичей с прочностью
+const brickRowCount = 4;
+const brickColumnCount = 9;
+const brickWidth = 75;
+const brickHeight = 20;
+const brickPadding = 10;
+const brickOffsetTop = 30;
+const brickOffsetLeft = 35;
 
-let paddleX = (CANVAS_NODE.width - PADDLE_WIDTH) / 2;
-
-let score = 0;
-let lives = 3;
-
-const bricks = [];
-
-for (let c = 0; c < BRICK_COLUMN_COUNT; c++) {
+let bricks = [];
+for (let c = 0; c < brickColumnCount; c++) {
     bricks[c] = [];
-
-    for (let r = 0; r < BRICK_ROW_COUNT; r++) {
-        bricks[c][r] = { x: 0, y: 0, status: 1 };
+    for (let r = 0; r < brickRowCount; r++) {
+        const strength = Math.floor(Math.random() * 3) + 1; // Случайная прочность от 1 до 3
+        bricks[c][r] = { x: 0, y: 0, strength };
     }
 }
 
-document.addEventListener("mousemove", handleMouseMove);
+// События клавиш
+document.addEventListener("keydown", keyDownHandler);
+document.addEventListener("keyup", keyUpHandler);
 
-function handleMouseMove(e) {
-    const RELATIVE_X = e.clientX - CANVAS_NODE.offsetLeft;
-
-    if (RELATIVE_X > 0 && RELATIVE_X < CANVAS_NODE.width) {
-        paddleX = RELATIVE_X - PADDLE_WIDTH / 2;
+function keyDownHandler(e) {
+    if (e.key === "ArrowRight" || e.key === "Right") {
+        rightPressed = true;
+    } else if (e.key === "ArrowLeft" || e.key === "Left") {
+        leftPressed = true;
     }
 }
 
+function keyUpHandler(e) {
+    if (e.key === "ArrowRight" || e.key === "Right") {
+        rightPressed = false;
+    } else if (e.key === "ArrowLeft" || e.key === "Left") {
+        leftPressed = false;
+    }
+}
+
+// Отрисовка мячика
 function drawBall() {
-    CTX.beginPath();
-    CTX.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI * 2);
-    CTX.fill();
-    CTX.closePath();
+    ctx.beginPath();
+    ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff69b4"; // Ярко-розовый мяч
+    ctx.fill();
+    ctx.closePath();
 }
 
+// Отрисовка платформы
 function drawPaddle() {
-    CTX.beginPath();
-    CTX.rect(
-        paddleX,
-        CANVAS_NODE.height - PADDLE_HEIGHT,
-        PADDLE_WIDTH,
-        PADDLE_HEIGHT
-    );
-    CTX.fill();
-    CTX.closePath();
+    ctx.beginPath();
+    ctx.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+    ctx.fillStyle = "#ff1493"; // Розовая платформа
+    ctx.fill();
+    ctx.closePath();
 }
 
+// Отрисовка кирпичей
 function drawBricks() {
-    for (let c = 0; c < BRICK_COLUMN_COUNT; c++) {
-        for (let r = 0; r < BRICK_ROW_COUNT; r++) {
-            if (bricks[c][r].status === 1) {
-                const BRICK_X = r * (BRICK_WIDTH + BRICK_PADDING) + BRICK_OFFSET;
-                const BRICK_Y = c * (BRICK_HEIGHT + BRICK_PADDING) + BRICK_OFFSET;
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            const brick = bricks[c][r];
+            if (brick.strength > 0) {
+                const brickX = c * (brickWidth + brickPadding) + brickOffsetLeft;
+                const brickY = r * (brickHeight + brickPadding) + brickOffsetTop;
+                brick.x = brickX;
+                brick.y = brickY;
 
-                bricks[c][r].x = BRICK_X;
-                bricks[c][r].y = BRICK_Y;
+                ctx.beginPath();
+                ctx.rect(brickX, brickY, brickWidth, brickHeight);
 
-                CTX.beginPath();
-                CTX.rect(BRICK_X, BRICK_Y, BRICK_WIDTH, BRICK_HEIGHT);
-                CTX.fill();
-                CTX.closePath();
+                // Цвет меняется в зависимости от прочности
+                if (brick.strength === 3) {
+                    ctx.fillStyle = "#ff69b4"; // Самый прочный
+                } else if (brick.strength === 2) {
+                    ctx.fillStyle = "#ffb6c1"; // Средний
+                } else {
+                    ctx.fillStyle = "#ffe4e1"; // Минимальный
+                }
+
+                ctx.fill();
+                ctx.closePath();
             }
         }
     }
 }
 
-function drawScore() {
-    CTX.fillText("Счет: " + score, 8, 20);
-}
-
-function drawLives() {
-    CTX.fillText("Жизней: " + lives, CANVAS_NODE.width - 85, 20);
-}
-
-function detectCollision() {
-    for (let c = 0; c < BRICK_COLUMN_COUNT; c++) {
-        for (let r = 0; r < BRICK_ROW_COUNT; r++) {
-            let brick = bricks[c][r];
-
-            if (brick.status === 1) {
-                const isCollisionTrue =
-                    ballX > brick.x &&
-                    ballX < brick.x + BRICK_WIDTH &&
-                    ballY > brick.y &&
-                    ballY < brick.y + BRICK_HEIGHT;
-
-                if (isCollisionTrue) {
+// Обработка столкновений
+function collisionDetection() {
+    for (let c = 0; c < brickColumnCount; c++) {
+        for (let r = 0; r < brickRowCount; r++) {
+            const brick = bricks[c][r];
+            if (brick.strength > 0) {
+                if (
+                    x > brick.x &&
+                    x < brick.x + brickWidth &&
+                    y > brick.y &&
+                    y < brick.y + brickHeight
+                ) {
                     dy = -dy;
-                    brick.status = 0;
-
-                    score++;
-
-                    if (score === BRICK_ROW_COUNT * BRICK_COLUMN_COUNT) {
-                        alert("Вы выиграли!");
-                        document.location.reload();
-                    }
+                    brick.strength--; // Уменьшить прочность кирпича
                 }
             }
         }
     }
 }
 
+// Основной игровой цикл
 function draw() {
-    CTX.clearRect(0, 0, CANVAS_NODE.width, CANVAS_NODE.height);
-
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBricks();
     drawBall();
     drawPaddle();
-    drawScore();
-    drawLives();
-    detectCollision();
+    collisionDetection();
 
-    if (ballX + dx < BALL_RADIUS || ballX + dx > CANVAS_NODE.width - BALL_RADIUS) {
+    // Движение мяча
+    if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
         dx = -dx;
     }
-
-    if (ballY + dy < BALL_RADIUS) {
+    if (y + dy < ballRadius) {
         dy = -dy;
-    }
-
-    if (ballY + dy > CANVAS_NODE.height - BALL_RADIUS) {
-        if (ballX > paddleX && ballX < paddleX + PADDLE_WIDTH) {
+    } else if (y + dy > canvas.height - ballRadius) {
+        if (x > paddleX && x < paddleX + paddleWidth) {
             dy = -dy;
         } else {
-            lives--;
-
-            if (lives === 0) {
-                alert("Игра окончена!");
-
-                document.location.reload();
-            } else {
-                ballX = CANVAS_NODE.width / 2;
-                ballY = CANVAS_NODE.height - 30;
-                dx = 2;
-                dy = -2;
-                paddleX = (CANVAS_NODE.width - PADDLE_WIDTH) / 2;
-            }
+            document.location.reload(); // Перезапуск игры
         }
     }
 
-    ballX += dx;
-    ballY += dy;
+    // Движение платформы
+    if (rightPressed && paddleX < canvas.width - paddleWidth) {
+        paddleX += 7;
+    } else if (leftPressed && paddleX > 0) {
+        paddleX -= 7;
+    }
+
+    x += dx;
+    y += dy;
 
     requestAnimationFrame(draw);
 }
 
+// Запуск игры
 draw();
