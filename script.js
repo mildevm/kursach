@@ -1,12 +1,13 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const startGameTime = Date.now()
 
 // Параметры мяча
 let ballRadius = 10;
 let x = canvas.width / 2;
 let y = canvas.height - 30;
-let dx = 3;
-let dy = -3;
+let dx = 6;
+let dy = -6;
 
 // Параметры платформы
 const paddleHeight = 10;
@@ -34,6 +35,10 @@ for (let c = 0; c < brickColumnCount; c++) {
         bricks[c][r] = { x: 0, y: 0, strength };
     }
 }
+
+// Счетчик очков и рекорд
+let score = 0;
+let highScore = localStorage.getItem('highScore') || 0;
 
 // События клавиш
 document.addEventListener("keydown", keyDownHandler);
@@ -117,19 +122,36 @@ function collisionDetection() {
                 ) {
                     dy = -dy;
                     brick.strength--; // Уменьшить прочность кирпича
+                    if (brick.strength === 0) {
+                        score += 10; // Увеличить счет на 10 очков за разрушение кирпича
+                        if (score > highScore) {
+                            highScore = score;
+                            localStorage.setItem('highScore', highScore); // Сохранить рекорд
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+// Отрисовка счета и рекорда
+function drawScore() {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "white";
+    ctx.fillText("Счет: " + score, 8, 20);
+    ctx.fillText("Время: " + Math.round((Date.now() - startGameTime) / 1000), canvas.width - 120, 20);
+}
 // Основной игровой цикл
 function draw() {
+    // console.log(Date.now()-startGameTime)
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBricks();
     drawBall();
     drawPaddle();
     collisionDetection();
+    drawScore();
 
     // Движение мяча
     if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
@@ -142,14 +164,15 @@ function draw() {
             dy = -dy;
         } else {
             document.location.reload(); // Перезапуск игры
+            // dy = -dy;
         }
     }
 
     // Движение платформы
     if (rightPressed && paddleX < canvas.width - paddleWidth) {
-        paddleX += 7;
+        paddleX += 9;
     } else if (leftPressed && paddleX > 0) {
-        paddleX -= 7;
+        paddleX -= 9;
     }
 
     x += dx;

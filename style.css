@@ -19,9 +19,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 820px;
+    width: 840px;
     /* ширина контейнера чуть больше Canvas */
-    height: 620px;
+    height: 630px;
     /* высота контейнера чуть больше Canvas */
     background-color: #ffcccc;
     /* светло-роз фон внутри рамки */
@@ -29,6 +29,7 @@ body {
     /* роз рамка */
     box-shadow: 0 0 20px #ff69b4;
     /* свечение рамки */
+    padding-right: -20px;
 }
 
 
